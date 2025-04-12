@@ -139,6 +139,23 @@ def sha256(message):
     # return binascii.hexlify(digest).decode('utf-8')
     # return ''.join(f'{byte:02x}' for byte in digest)
 
+class SHA256:
+    def __init__(self, data=b""):
+        self._data = data
+
+    def update(self, data):
+        self._data += data
+
+    def digest(self):
+        return sha256(self._data)
+
+    def hexdigest(self):
+        return ''.join(f'{b:02x}' for b in self.digest())
+
+    @property
+    def digest_size(self):
+        return 32
+
 if __name__ == '__main__':
     verdict = 'y'
     while verdict == 'y':

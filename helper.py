@@ -1,0 +1,32 @@
+from sha256 import SHA256
+import os
+
+def xor_bytes(a: bytes, b: bytes) -> bytes:
+    return bytes(x ^ y for x, y in zip(a, b))
+
+def mgf1(seed: bytes, length: int, hash_cls=SHA256):
+    counter = 0
+    output = b''
+    while len(output) < length:
+        c = counter.to_bytes(4, 'big')
+        output += hash_cls(seed + c).digest()
+        counter += 1
+    return output[:length]
+
+def oaep_encode(message: bytes, k: int, label: bytes = b"", hash_cls=SHA256) -> bytes:
+    hLen = hash_cls().digest_size
+    mLen = len(message)
+
+    if mLen > k - 2 * hLen - 2:
+        raise ValueError("Message too long")
+
+    lHash = hash_cls(label).digest()
+    PS = b'\x00' * (k - mLen - 2 * hLen - 2)
+    DB = lHash + PS + b'\x01' + message
+    seed = os.urandom(hLen)
+    dbMask = mgf1(seed, k - hLen - 1, hash_cls)
+    maskedDB = xor_bytes(DB, dbMask)
+    seedMask = mgf1(maskedDB, hLen, hash_cls)
+    maskedSeed = xor_bytes(seed, seedMask)
+
+    return b'\x00' + maskedSeed + maskedDB
