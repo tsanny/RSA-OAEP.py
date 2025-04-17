@@ -1,4 +1,4 @@
-from helper import oaep_encode
+from helper import oaep_encode, oaep_decode
 
 class RSA_OAEP:
     def __init__(self):
@@ -8,7 +8,6 @@ class RSA_OAEP:
         self.p = None
         self.q = None
         self.key_size = 2048  # 2048-bit keys
-        self.hash_cls = SHA256
 
     def generate_keys(self):
         """Generate RSA key pair."""
@@ -31,8 +30,14 @@ class RSA_OAEP:
         return ciphertext
 
     def decrypt(self, private_key, ciphertext):
+        n, d = private_key
+        k = (n.bit_length() + 7) // 8
+
         """RSA-OAEP decryption."""
-        message = ""
+        c_int = int.from_bytes(ciphertext, byteorder="big")
+        m_int = pow(c_int, d, n)
+
+        em = m_int.to_bytes(k, byteorder="big")
+        message = oaep_decode(em, k, label=b"")
 
         return message
-
