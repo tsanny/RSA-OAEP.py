@@ -11,11 +11,15 @@ class RSAFileProcessor:
         self.keys = self.rsa.generate_keys()
 
         if save_to_file:
+            n = self.keys['public_key'][0]
+            e = self.keys['public_key'][1]
+            d = self.keys['private_key'][1]
+
             with open('public_key.txt', 'w') as f:
-                f.write(f"{self.keys['public_key'][0]},{self.keys['public_key'][1]}")
+                f.write(f"{hex(n)[2:]},{hex(e)[2:]}")
 
             with open('private_key.txt', 'w') as f:
-                f.write(f"{self.keys['private_key'][0]},{self.keys['private_key'][1]}")
+                f.write(f"{hex(n)[2:]},{hex(d)[2:]}")
 
         return self.keys
 
