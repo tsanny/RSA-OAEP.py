@@ -1,9 +1,10 @@
-from helper import oaep_encode, oaep_decode
+from helper import oaep_encode, oaep_decode, generate_prime, modinv
+import math
 
 class RSA_OAEP:
     def __init__(self):
         self.n = None
-        self.e = None
+        self.e = 65537
         self.d = None
         self.p = None
         self.q = None
@@ -11,7 +12,27 @@ class RSA_OAEP:
 
     def generate_keys(self):
         """Generate RSA key pair."""
-        pass
+        e, key_size = self.e, self.key_size
+
+        while True:
+            p = generate_prime(key_size//2)
+            q = generate_prime(key_size//2)
+
+            if p == q: continue
+
+            n = p * q
+            phi = (p-1) * (q-1)
+
+            # if math.gcd(e, phi) != 1: continue
+
+            d = modinv(e, phi)
+            break
+        
+        return {
+            'public_key': (n, e),
+            'private_key': (n, d)
+        }
+
 
     def encrypt(self, public_key, message):
         """RSA-OAEP encryption."""

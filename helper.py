@@ -1,5 +1,52 @@
 from sha256 import SHA256
-import os
+import os, random
+
+def prime_checker(n, k):
+    # if n <= 1:
+    #     return False
+    # if n <= 3:
+    #     return True
+    # if n % 2 == 0:
+    #     return False
+    
+    r, s = 0, n-1
+    while s % 2 == 0:
+        r += 1
+        s //= 2
+    for _ in range(k):
+        a = random.randrange(2, n-1)
+        x = pow(a, s, n)
+        if x == 1 or x == n - 1:
+            continue
+        for _ in range(r-1):
+            x = pow(x, 2, n)
+            if x == n - 1:
+                break
+        else:
+            return False
+    
+    return True
+
+def generate_prime(bits):
+    while True:
+        p = random.getrandbits(bits)
+        p |= (1 << bits - 1) | 1 # starts and ends with 1
+        if prime_checker(p, 40):
+            return p
+
+def modinv(a, m):
+    """Modular inverse of a % m using extended Euclidean algorithm"""
+    y2, y1 = 0, 1
+    r, new_r = m, a
+
+    while new_r != 0:
+        q = r // new_r
+        y2, y1 = y1, y2 - q * y1
+        r, new_r = new_r, r - q * new_r
+
+    if r != 1:
+        raise ValueError(f"gcd({a}, {m}) != 1")
+    return y2 % m
 
 
 def xor_bytes(a: bytes, b: bytes) -> bytes:
