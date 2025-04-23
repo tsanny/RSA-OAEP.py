@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
 from file_io import RSAFileProcessor
-from helper import parse_hex_public_key
+from helper import parse_hex_key
 from rsa_oaep import RSA_OAEP
 
 class CryptoApp:
@@ -194,7 +194,7 @@ class CryptoApp:
             return
 
         try:
-            n, e = parse_hex_public_key(pubkey_file)
+            n, e = parse_hex_key(pubkey_file)
 
             # Load public key from file
             # with open(pubkey_file, 'r') as f:
@@ -248,9 +248,7 @@ class CryptoApp:
             return
 
         try:
-            # Load private key from file
-            with open(privkey_file, 'r') as f:
-                n, d = map(int, f.read().strip().split(','))
+            n, d = parse_hex_key(privkey_file)  # Create this function in helper.py
             private_key = (n, d)
 
             # Read ciphertext file
