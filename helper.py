@@ -119,11 +119,12 @@ def oaep_decode(
 
 def parse_hex_public_key(file_path):
     with open(file_path, 'r') as f:
-        lines = f.read().strip().splitlines()
+        line = f.read().strip()
 
-    if len(lines) != 2:
-        raise ValueError("Invalid public key file format. Expected two lines: n and e")
+    parts = line.split(',')
+    if len(parts) != 2:
+        raise ValueError("Invalid public key file format. Expected format: <n_hex>,<e_hex>")
 
-    n = int(lines[0], 16)
-    e = int(lines[1], 16)
+    n = int(parts[0], 16)
+    e = int(parts[1], 16)
     return n, e

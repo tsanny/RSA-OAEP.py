@@ -211,11 +211,11 @@ class CryptoApp:
             # Encrypt using RSA-OAEP
             rsa = RSA_OAEP()
             ciphertext = rsa.encrypt(public_key, plaintext)
-            print(ciphertext)
+            print("ciphertext", ciphertext)
 
             # Ensure ciphertext is exactly 256 bytes (2048 bits)
-            # if len(ciphertext) != 256:
-            #     raise ValueError(f"Ciphertext length is {len(ciphertext)} bytes, expected 256 bytes")
+            if len(ciphertext) != 256:
+                raise ValueError(f"Ciphertext length is {len(ciphertext)} bytes, expected 256 bytes")
 
             # Write ciphertext to file
             with open(output_file, 'wb') as f:
