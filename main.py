@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
 from file_io import RSAFileProcessor
+from helper import parse_hex_public_key
 from rsa_oaep import RSA_OAEP
 
 class CryptoApp:
@@ -193,9 +194,12 @@ class CryptoApp:
             return
 
         try:
+            n, e = parse_hex_public_key(pubkey_file)
+
             # Load public key from file
-            with open(pubkey_file, 'r') as f:
-                n, e = map(int, f.read().strip().split(','))
+            # with open(pubkey_file, 'r') as f:
+            #     n, e = map(int, f.read().strip().split(','))
+            print(n, e)
             public_key = (n, e)
 
             # Read plaintext file
@@ -207,10 +211,11 @@ class CryptoApp:
             # Encrypt using RSA-OAEP
             rsa = RSA_OAEP()
             ciphertext = rsa.encrypt(public_key, plaintext)
+            print(ciphertext)
 
             # Ensure ciphertext is exactly 256 bytes (2048 bits)
-            if len(ciphertext) != 256:
-                raise ValueError(f"Ciphertext length is {len(ciphertext)} bytes, expected 256 bytes")
+            # if len(ciphertext) != 256:
+            #     raise ValueError(f"Ciphertext length is {len(ciphertext)} bytes, expected 256 bytes")
 
             # Write ciphertext to file
             with open(output_file, 'wb') as f:

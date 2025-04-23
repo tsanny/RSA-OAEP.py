@@ -1,5 +1,6 @@
 from sha256 import SHA256
 import os, random
+import base64
 
 def prime_checker(n, k):
     # if n <= 1:
@@ -70,6 +71,7 @@ def oaep_encode(message: bytes, k: int, label: bytes = b"", hash_cls=SHA256) -> 
     if mLen > k - 2 * hLen - 2:
         raise ValueError("Message too long")
 
+
     lHash = hash_cls(label).digest()
     PS = b"\x00" * (k - mLen - 2 * hLen - 2)
     DB = lHash + PS + b"\x01" + message
@@ -114,3 +116,14 @@ def oaep_decode(
         raise ValueError("0x01 separator not found")
 
     return message
+
+def parse_hex_public_key(file_path):
+    with open(file_path, 'r') as f:
+        lines = f.read().strip().splitlines()
+
+    if len(lines) != 2:
+        raise ValueError("Invalid public key file format. Expected two lines: n and e")
+
+    n = int(lines[0], 16)
+    e = int(lines[1], 16)
+    return n, e

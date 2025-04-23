@@ -39,9 +39,13 @@ class RSA_OAEP:
         n, e = public_key
         k = (n.bit_length() + 7) // 8  # key length in bytes
 
-        # Encode message using OAEP
-        message_bytes = message.encode()
-        em = oaep_encode(message_bytes, k, label=b"", hash_cls=self.hash_cls)
+        # Use message directly if it's already bytes
+        if isinstance(message, str):
+            message_bytes = message.encode()
+        else:
+            message_bytes = message
+
+        em = oaep_encode(message_bytes, k, label=b"")
 
         # RSA encryption: c = em^e mod n
         m_int = int.from_bytes(em, byteorder='big')
