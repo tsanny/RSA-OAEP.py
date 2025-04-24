@@ -213,10 +213,6 @@ class CryptoApp:
             ciphertext = rsa.encrypt(public_key, plaintext)
             print("ciphertext", ciphertext)
 
-            # Ensure ciphertext is exactly 256 bytes (2048 bits)
-            if len(ciphertext) != 256:
-                raise ValueError(f"Ciphertext length is {len(ciphertext)} bytes, expected 256 bytes")
-
             # Write ciphertext to file
             with open(output_file, 'wb') as f:
                 f.write(ciphertext)
@@ -224,7 +220,7 @@ class CryptoApp:
             end_time = time.time()
 
             self.enc_time_var.set(f"Encryption completed in {(end_time - start_time) * 1000:.2f} ms")
-            self.cipher_info_var.set(f"Ciphertext size: {len(ciphertext)} bytes (256 bytes expected)")
+            self.cipher_info_var.set(f"Ciphertext size: {len(ciphertext)} bytes")
             self.update_status(f"File encrypted successfully: {output_file}")
             messagebox.showinfo("Success", f"File encrypted successfully!\nSaved to: {output_file}")
         except Exception as e:

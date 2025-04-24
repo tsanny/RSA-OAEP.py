@@ -9,7 +9,7 @@ def prime_checker(n, k):
     #     return True
     # if n % 2 == 0:
     #     return False
-    
+
     r, s = 0, n-1
     while s % 2 == 0:
         r += 1
@@ -25,7 +25,7 @@ def prime_checker(n, k):
                 break
         else:
             return False
-    
+
     return True
 
 def generate_prime(bits):
