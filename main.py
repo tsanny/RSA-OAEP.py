@@ -196,10 +196,6 @@ class CryptoApp:
         try:
             n, e = parse_hex_key(pubkey_file)
 
-            # Load public key from file
-            # with open(pubkey_file, 'r') as f:
-            #     n, e = map(int, f.read().strip().split(','))
-            print(n, e)
             public_key = (n, e)
 
             # Read plaintext file
