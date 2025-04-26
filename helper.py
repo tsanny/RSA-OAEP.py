@@ -55,16 +55,40 @@ def xor_bytes(a: bytes, b: bytes) -> bytes:
 
 
 def mgf1(seed: bytes, length: int, hash_cls=SHA256):
+    """
+    Given a seed, generates a pseudorandom mask of a desired length using a hash function.
+    In this case, uses SHA256  
+
+    Args:
+        seed (bytes): The input seed for the mask generation.
+        length (int): Desired length of the output mask in bytes.
+        hash_cls (class): Hash function class to use
+
+    Returns:
+        bytes: A mask of the specified length.
+    """
     counter = 0
     output = b""
     while len(output) < length:
         c = counter.to_bytes(4, "big")
         output += hash_cls(seed + c).digest()
         counter += 1
-    return output[:length]
+    return output[:length] # Truncate to asked length
 
 
 def oaep_encode(message: bytes, k: int, label: bytes = b"", hash_cls=SHA256) -> bytes:
+    """
+    Prepares a message for secure encryption with RSA by padding it using OAEP scheme.
+
+    Args:
+        message (bytes): The input message to encode.
+        k (int): The length of the RSA modulus in bytes.
+        label (bytes): An optional label associated with the message (default empty).
+        hash_cls (class): Hash function class to use (default is SHA256).
+
+    Returns:
+        bytes: The OAEP encoded message ready for RSA encryption.
+    """
     hLen = hash_cls().digest_size
     mLen = len(message)
 
@@ -73,20 +97,31 @@ def oaep_encode(message: bytes, k: int, label: bytes = b"", hash_cls=SHA256) -> 
 
 
     lHash = hash_cls(label).digest()
-    PS = b"\x00" * (k - mLen - 2 * hLen - 2)
-    DB = lHash + PS + b"\x01" + message
+    PS = b"\x00" * (k - mLen - 2 * hLen - 2) # PS is padding made of 0x00 bytes
+    DB = lHash + PS + b"\x01" + message # lHash || PS || 0x01 || M
     seed = os.urandom(hLen)
-    dbMask = mgf1(seed, k - hLen - 1, hash_cls)
+    dbMask = mgf1(seed, k - hLen - 1, hash_cls) # dbMask = MGF(seed)
     maskedDB = xor_bytes(DB, dbMask)
-    seedMask = mgf1(maskedDB, hLen, hash_cls)
+    seedMask = mgf1(maskedDB, hLen, hash_cls) # seedMask = MGF(maskedDB)
     maskedSeed = xor_bytes(seed, seedMask)
 
     return b"\x00" + maskedSeed + maskedDB
 
-
 def oaep_decode(
     encoded_message: bytes, k: int, label: bytes = b"", hash_cls=SHA256
 ) -> bytes:
+    """
+    Recovers the original message from an OAEP encoded message after RSA decryption.
+
+    Args:
+        encoded_message (bytes): The OAEP encoded message after RSA decryption.
+        k (int): The length of the RSA modulus in bytes.
+        label (bytes): An optional label associated with the message (default empty).
+        hash_cls (class): Hash function class to use (default is SHA256).
+
+    Returns:
+        bytes: The original decoded message.
+    """
     hLen = hash_cls().digest_size
 
     Y = encoded_message[0]
