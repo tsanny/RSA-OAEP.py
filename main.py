@@ -276,9 +276,8 @@ class CryptoApp:
 
 def main():
     root = tk.Tk()
-    app = CryptoApp(root)
+    CryptoApp(root)
     root.mainloop()
-
 
 if __name__ == '__main__':
     main()

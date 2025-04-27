@@ -1,25 +1,30 @@
 from sha256 import SHA256
-import os, random
-import base64
+from typing import Tuple
+import os
+import random
 
-def prime_checker(n, k):
-    # if n <= 1:
-    #     return False
-    # if n <= 3:
-    #     return True
-    # if n % 2 == 0:
-    #     return False
 
-    r, s = 0, n-1
+def prime_checker(n: int, k: int) -> bool:
+    """
+    Miller-Rabin primality test to check if n is prime.
+
+    Args:
+        n (int): The number to check for primality.
+        k (int): The number of iterations for accuracy.
+
+    Returns:
+        bool: True if n is probably prime, False if composite.
+    """
+    r, s = 0, n - 1
     while s % 2 == 0:
         r += 1
         s //= 2
     for _ in range(k):
-        a = random.randrange(2, n-1)
+        a = random.randrange(2, n - 1)
         x = pow(a, s, n)
         if x == 1 or x == n - 1:
             continue
-        for _ in range(r-1):
+        for _ in range(r - 1):
             x = pow(x, 2, n)
             if x == n - 1:
                 break
@@ -28,15 +33,35 @@ def prime_checker(n, k):
 
     return True
 
-def generate_prime(bits):
+
+def generate_prime(bits: int) -> int:
+    """
+    Generates a prime number of specified bit length using Miller-Rabin test.
+
+    Args:
+        bits (int): The bit length of the prime number to generate.
+
+    Returns:
+        int: A prime number of the specified bit length.
+    """
     while True:
         p = random.getrandbits(bits)
-        p |= (1 << bits - 1) | 1 # starts and ends with 1
+        p |= (1 << bits - 1) | 1  # starts and ends with 1
         if prime_checker(p, 40):
             return p
 
-def modinv(a, m):
-    """Modular inverse of a % m using extended Euclidean algorithm"""
+
+def modinv(a: int, m: int) -> int:
+    """
+    Modular inverse of a % m using extended Euclidean algorithm
+
+    Args:
+        a (int): The number to find the inverse of.
+        m (int): The modulus.
+
+    Returns:
+        int: The modular inverse of a % m.
+    """
     y2, y1 = 0, 1
     r, new_r = m, a
 
@@ -57,7 +82,7 @@ def xor_bytes(a: bytes, b: bytes) -> bytes:
 def mgf1(seed: bytes, length: int, hash_cls=SHA256):
     """
     Given a seed, generates a pseudorandom mask of a desired length using a hash function.
-    In this case, uses SHA256  
+    In this case, uses SHA256
 
     Args:
         seed (bytes): The input seed for the mask generation.
@@ -73,7 +98,7 @@ def mgf1(seed: bytes, length: int, hash_cls=SHA256):
         c = counter.to_bytes(4, "big")
         output += hash_cls(seed + c).digest()
         counter += 1
-    return output[:length] # Truncate to asked length
+    return output[:length]  # Truncate to asked length
 
 
 def oaep_encode(message: bytes, k: int, label: bytes = b"", hash_cls=SHA256) -> bytes:
@@ -95,17 +120,17 @@ def oaep_encode(message: bytes, k: int, label: bytes = b"", hash_cls=SHA256) -> 
     if mLen > k - 2 * hLen - 2:
         raise ValueError("Message too long")
 
-
     lHash = hash_cls(label).digest()
-    PS = b"\x00" * (k - mLen - 2 * hLen - 2) # PS is padding made of 0x00 bytes
-    DB = lHash + PS + b"\x01" + message # lHash || PS || 0x01 || M
+    PS = b"\x00" * (k - mLen - 2 * hLen - 2)  # PS is padding made of 0x00 bytes
+    DB = lHash + PS + b"\x01" + message  # lHash || PS || 0x01 || M
     seed = os.urandom(hLen)
-    dbMask = mgf1(seed, k - hLen - 1, hash_cls) # dbMask = MGF(seed)
+    dbMask = mgf1(seed, k - hLen - 1, hash_cls)  # dbMask = MGF(seed)
     maskedDB = xor_bytes(DB, dbMask)
-    seedMask = mgf1(maskedDB, hLen, hash_cls) # seedMask = MGF(maskedDB)
+    seedMask = mgf1(maskedDB, hLen, hash_cls)  # seedMask = MGF(maskedDB)
     maskedSeed = xor_bytes(seed, seedMask)
 
     return b"\x00" + maskedSeed + maskedDB
+
 
 def oaep_decode(
     encoded_message: bytes, k: int, label: bytes = b"", hash_cls=SHA256
@@ -152,14 +177,25 @@ def oaep_decode(
 
     return message
 
-def parse_hex_key(file_path):
-    with open(file_path, 'r') as f:
+
+def parse_hex_key(file_path: str) -> Tuple[int, int]:
+    """
+    Parses a hex key file and returns the modulus (n) and exponent (e).
+
+    Args:
+        file_path (str): Path to the key file.
+
+    Returns:
+        Tuple[int, int]: Modulus (n) and exponent (e) as integers.
+    """
+    with open(file_path, "r") as f:
         line = f.read().strip()
 
-    parts = line.split(',')
+    parts = line.split(",")
     if len(parts) != 2:
         raise ValueError("Invalid key file format. Expected format: <hex>,<hex>")
 
     n = int(parts[0], 16)
     e = int(parts[1], 16)
+
     return n, e
