@@ -51,7 +51,7 @@ class RSA_OAEP:
 
             self.p, self.q = p, q
             n = p * q
-            phi = (p - 1) * (q - 1)
+            phi = (p-1) * (q-1)
             d = modinv(e, phi)
             self.n, self.d = n, d
             break

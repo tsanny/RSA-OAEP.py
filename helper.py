@@ -1,42 +1,12 @@
 from sha256 import SHA256
 from typing import Tuple
 import os
-import random
-
-
-def prime_checker(n: int, k: int) -> bool:
-    """
-    Miller-Rabin primality test to check if n is prime.
-
-    Args:
-        n (int): The number to check for primality.
-        k (int): The number of iterations for accuracy.
-
-    Returns:
-        bool: True if n is probably prime, False if composite.
-    """
-    r, s = 0, n - 1
-    while s % 2 == 0:
-        r += 1
-        s //= 2
-    for _ in range(k):
-        a = random.randrange(2, n - 1)
-        x = pow(a, s, n)
-        if x == 1 or x == n - 1:
-            continue
-        for _ in range(r - 1):
-            x = pow(x, 2, n)
-            if x == n - 1:
-                break
-        else:
-            return False
-
-    return True
+import random, sympy
 
 
 def generate_prime(bits: int) -> int:
     """
-    Generates a prime number of specified bit length using Miller-Rabin test.
+    Generates a prime number of specified bit length.
 
     Args:
         bits (int): The bit length of the prime number to generate.
@@ -44,11 +14,10 @@ def generate_prime(bits: int) -> int:
     Returns:
         int: A prime number of the specified bit length.
     """
-    while True:
-        p = random.getrandbits(bits)
-        p |= (1 << bits - 1) | 1  # starts and ends with 1
-        if prime_checker(p, 40):
-            return p
+    lower = 1 << (bits - 1)
+    upper = 1 << bits
+
+    return sympy.randprime(lower, upper)
 
 
 def modinv(a: int, m: int) -> int:
