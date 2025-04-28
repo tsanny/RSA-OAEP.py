@@ -46,12 +46,12 @@ class CryptoApp:
 
         # Public key display
         ttk.Label(key_info_frame, text="Public Key (n, e):").pack(anchor=tk.W)
-        self.pub_key_text = tk.Text(key_info_frame, height=3, width=80, wrap=tk.WORD)
+        self.pub_key_text = tk.Text(key_info_frame, height=3, width=80, wrap=tk.WORD, state=tk.DISABLED)
         self.pub_key_text.pack(fill="x", padx=5, pady=5)
 
         # Private key display
         ttk.Label(key_info_frame, text="Private Key (n, d):").pack(anchor=tk.W)
-        self.priv_key_text = tk.Text(key_info_frame, height=3, width=80, wrap=tk.WORD)
+        self.priv_key_text = tk.Text(key_info_frame, height=3, width=80, wrap=tk.WORD, state=tk.DISABLED)
         self.priv_key_text.pack(fill="x", padx=5, pady=5)
 
         # Generate keys button
