@@ -9,7 +9,7 @@ Program ini digunakan untuk melakukan enkripsi dan dekripsi pesan menggunakan al
 4. Pada tab Encryption, pilih file plaintext yang akan dienkripsi dan file public key yang telah terbuat. Hasil enkripsi dapat dilihat pada direktori yang sama.
 5. Pada tab Decryption, pilih file ciphertext yang akan didekripsi, file private key yang telah terbuat, dan tuliskan nama file untuk output hasil dekripsi. Hasil dekripsi dapat dilihat pada direktori yang sama.
 
-Struktur program:
+**Struktur program:**
 - `main.py`: Kode untuk menjalankan program beserta menampilkan *graphical user interface* (GUI)
 - `file_io.py`: Kode untuk memproses *file* *plaintext, ciphertext, public key, dan private key*
 - `rsa_oaep.py`: Kode untuk membuat key, mengenkripsi *plaintext*, dan mendekripsi *ciphertext* dengan implementasi RSA-OAEP
