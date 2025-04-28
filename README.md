@@ -1,8 +1,8 @@
-RSA-OAEP Encryption and Decryption
+# RSA-OAEP Encryption and Decryption
 
 Program ini digunakan untuk melakukan enkripsi dan dekripsi pesan menggunakan algoritma RSA dengan padding OAEP.
 
-Cara pakai:
+**Cara pakai:**
 1. Pastikan library SimPy sudah ter-install (jika belum, jalankan perintah "pip install simpy").
 2. Jalankan main.py.
 3. Pada tab Key Generation, klik Generate Keys untuk menghasilkan pasangan kunci (public dan private key)
