@@ -1,35 +1,54 @@
-import os
-from typing import Dict, Tuple, Optional, List, Literal
+from typing import Dict, Tuple
 from rsa_oaep import RSA_OAEP
+from helper import parse_hex_key_file
 
 
 class RSAFileProcessor:
     def __init__(self):
         self.rsa = RSA_OAEP()
-        self.keys: Optional[Dict[str, Tuple[int, int]]] = None
 
-    def generate_keys(self, save_to_file: bool = True) -> Dict[str, Tuple[int, int]]:
-        """Generate RSA keys and optionally save to files"""
-        self.keys = self.rsa.generate_keys()
+    def generate_keys(self) -> Dict[str, Tuple[int, int]]:
+        """
+        Generate RSA keys save to files.
+        Returns the generated keys dictionary.
+        """
+        generated_keys = self.rsa.generate_keys()
 
-        if save_to_file:
-            n = self.keys["public_key"][0]
-            e = self.keys["public_key"][1]
-            d = self.keys["private_key"][1]
+        n = generated_keys["public_key"][0]
+        e = generated_keys["public_key"][1]
+        d = generated_keys["private_key"][1]
 
-            with open("public_key.txt", "w") as f:
-                f.write(f"{hex(n)[2:]},{hex(e)[2:]}")
+        with open("public_key.txt", "w") as f:
+            f.write(f"{hex(n)[2:]},{hex(e)[2:]}")
 
-            with open("private_key.txt", "w") as f:
-                f.write(f"{hex(n)[2:]},{hex(d)[2:]}")
+        with open("private_key.txt", "w") as f:
+            f.write(f"{hex(n)[2:]},{hex(d)[2:]}")
 
-        return self.keys
+        return generated_keys
 
-    def encrypt_file(self, input_path: str, output_path: str = "encrypted.txt") -> str:
+    def load_public_key(self, key_path: str) -> Tuple[int, int]:
+        """Loads a public key from a file and returns it"""
+        try:
+            n, e = parse_hex_key_file(key_path)
+            return (n, e)
+        except Exception as e:
+            raise ValueError(f"Failed to load public key from {key_path}: {e}")
+
+    def load_private_key(self, key_path: str) -> Tuple[int, int]:
+        """Loads a private key from a file and returns it"""
+        try:
+            n, d = parse_hex_key_file(key_path)
+            return (n, d)
+        except Exception as e:
+            raise ValueError(f"Failed to load private key from {key_path}: {e}")
+
+    def encrypt_file(
+        self,
+        input_path: str,
+        output_path: str,
+        public_key: Tuple[int, int],
+    ) -> str:
         """Encrypt file content using RSA-OAEP"""
-        if not self.keys:
-            raise ValueError("Keys not loaded or generated")
-
         # Read input file
         try:
             with open(input_path, "rb") as f:
@@ -38,76 +57,35 @@ class RSAFileProcessor:
             raise FileNotFoundError(f"Input file not found: {input_path}")
 
         # Encrypt the data
-        ciphertext = self.rsa.encrypt(self.keys["public_key"], data)
+        ciphertext = self.rsa.encrypt(public_key, data)
 
-        # Write encrypted data (hex encoded for text file)
-        with open(output_path, "w") as f:
-            f.write(ciphertext.hex())
+        # Write encrypted data as binary
+        with open(output_path, "wb") as f:
+            f.write(ciphertext)
 
         return output_path
 
-    def decrypt_file(self, input_path: str, output_path: str = "decrypted.txt") -> str:
+    def decrypt_file(
+        self, input_path: str, output_path: str, private_key: Tuple[int, int]
+    ) -> str:
         """Decrypt file content using RSA-OAEP"""
-        if not self.keys:
-            raise ValueError("Keys not loaded or generated")
-
-        # Read encrypted file (hex encoded)
+        # Read encrypted file as binary
         try:
-            with open(input_path, "r") as f:
-                hex_data = f.read().strip()
-                ciphertext = bytes.fromhex(hex_data)
+            with open(input_path, "rb") as f:
+                ciphertext = f.read().strip()
         except FileNotFoundError:
             raise FileNotFoundError(f"Input file not found: {input_path}")
         except ValueError:
             raise ValueError("Invalid encrypted file format - expected hex string")
 
         # Decrypt the data
-        plaintext = self.rsa.decrypt(self.keys["private_key"], ciphertext)
+        plaintext = self.rsa.decrypt(private_key, ciphertext)
 
-        # Write decrypted data as hexadecimal
-        with open(output_path, "w") as f:
-            f.write(plaintext.hex())
+        # Write decrypted data as binary
+        with open(output_path, "wb") as f:
+            f.write(plaintext)
 
         return output_path
-
-    def process_directory(
-        self,
-        directory: str,
-        operation: Literal["encrypt", "decrypt"] = "encrypt",
-        output_dir: str = "processed",
-    ) -> List[str]:
-        """Process all files in a directory with the specified operation"""
-        if not os.path.exists(directory):
-            raise FileNotFoundError(f"Directory not found: {directory}")
-
-        # Create output directory if it doesn't exist
-        os.makedirs(output_dir, exist_ok=True)
-
-        processed_files = []
-
-        for filename in os.listdir(directory):
-            input_path = os.path.join(directory, filename)
-
-            if os.path.isfile(input_path):
-                output_filename = f"{operation}d_{filename}"
-                output_path = os.path.join(output_dir, output_filename)
-
-                try:
-                    if operation == "encrypt":
-                        result = self.encrypt_file(input_path, output_path)
-                    elif operation == "decrypt":
-                        result = self.decrypt_file(input_path, output_path)
-                    else:
-                        raise ValueError(
-                            "Invalid operation - use 'encrypt' or 'decrypt'"
-                        )
-
-                    processed_files.append(result)
-                except Exception as e:
-                    print(f"Error processing {filename}: {str(e)}")
-                    continue
-
-        return processed_files
 
 
 def main():

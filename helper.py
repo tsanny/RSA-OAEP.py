@@ -147,7 +147,7 @@ def oaep_decode(
     return message
 
 
-def parse_hex_key(file_path: str) -> Tuple[int, int]:
+def parse_hex_key_file(file_path: str) -> Tuple[int, int]:
     """
     Parses a hex key file and returns the modulus (n) and exponent (e).
 

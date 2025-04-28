@@ -1,10 +1,9 @@
 import time
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+import os
 
 from file_io import RSAFileProcessor
-from helper import parse_hex_key
-from rsa_oaep import RSA_OAEP
 
 class CryptoApp:
     def __init__(self, root):
@@ -83,41 +82,33 @@ class CryptoApp:
         self.pubkey_entry.pack(side=tk.LEFT, padx=5, pady=10, fill="x", expand=True)
 
         pubkey_browse = ttk.Button(pubkey_frame, text="Browse",
-                                   command=lambda: self.browse_file(self.pubkey_entry,
-                                                                    [("Key files", "*.txt"),
-                                                                     ("All files", "*.*")]))
+                                   command=lambda: self.browse_file(self.pubkey_entry, [("Text files", "*.txt"), ("All files", "*.*")]))
         pubkey_browse.pack(side=tk.RIGHT, padx=5, pady=10)
 
         # Encrypt button
-        encrypt_button = tk.Button(encryption_tab, text="Encrypt", font=("Arial", 12),
+        encrypt_button = tk.Button(encryption_tab, text="Encrypt File", font=("Arial", 12),
                                    width=15, height=2, bg="#4CAF50", fg="white",
                                    command=self.encrypt_file)
         encrypt_button.pack(pady=20)
-
-        # Time label
-        self.enc_time_var = tk.StringVar()
-        ttk.Label(encryption_tab, textvariable=self.enc_time_var).pack()
-
-        # Ciphertext info
-        self.cipher_info_var = tk.StringVar()
-        ttk.Label(encryption_tab, textvariable=self.cipher_info_var).pack()
+        
+        # Info text
+        self.encryption_info_var = tk.StringVar()
+        ttk.Label(encryption_tab, textvariable=self.encryption_info_var).pack()
 
     def create_decryption_tab(self):
         decryption_tab = ttk.Frame(self.notebook)
         self.notebook.add(decryption_tab, text="Decryption")
 
         # Ciphertext file input frame
-        cipher_frame = ttk.LabelFrame(decryption_tab, text="Ciphertext File")
-        cipher_frame.pack(fill="x", padx=20, pady=10)
+        ciphertext_frame = ttk.LabelFrame(decryption_tab, text="Ciphertext File")
+        ciphertext_frame.pack(fill="x", padx=20, pady=10)
 
-        self.cipher_entry = ttk.Entry(cipher_frame, width=70)
-        self.cipher_entry.pack(side=tk.LEFT, padx=5, pady=10, fill="x", expand=True)
+        self.ciphertext_entry = ttk.Entry(ciphertext_frame, width=70)
+        self.ciphertext_entry.pack(side=tk.LEFT, padx=5, pady=10, fill="x", expand=True)
 
-        cipher_browse = ttk.Button(cipher_frame, text="Browse",
-                                   command=lambda: self.browse_file(self.cipher_entry,
-                                                                    [("Encrypted files", "*.enc"),
-                                                                     ("All files", "*.*")]))
-        cipher_browse.pack(side=tk.RIGHT, padx=5, pady=10)
+        ciphertext_browse = ttk.Button(ciphertext_frame, text="Browse",
+                                       command=lambda: self.browse_file(self.ciphertext_entry, [("Binary files", "*.bin"), ("All files", "*.*")]))
+        ciphertext_browse.pack(side=tk.RIGHT, padx=5, pady=10)
 
         # Private key file input frame
         privkey_frame = ttk.LabelFrame(decryption_tab, text="Private Key File")
@@ -127,146 +118,136 @@ class CryptoApp:
         self.privkey_entry.pack(side=tk.LEFT, padx=5, pady=10, fill="x", expand=True)
 
         privkey_browse = ttk.Button(privkey_frame, text="Browse",
-                                    command=lambda: self.browse_file(
-                                        self.privkey_entry,
-                                        [("Key files", "*.txt"), ("All files", "*.*")]
-                                    ))
+                                    command=lambda: self.browse_file(self.privkey_entry, [("Text files", "*.txt"), ("All files", "*.*")]))
         privkey_browse.pack(side=tk.RIGHT, padx=5, pady=10)
 
-        # Output file frame
-        output_frame = ttk.LabelFrame(decryption_tab, text="Output Plaintext File Name")
-        output_frame.pack(fill="x", padx=20, pady=10)
-
-        self.dec_output_entry = ttk.Entry(output_frame, width=70)
-        self.dec_output_entry.pack(side=tk.LEFT, padx=5, pady=10, fill="x", expand=True)
-
         # Decrypt button
-        decrypt_button = tk.Button(decryption_tab, text="Decrypt", font=("Arial", 12),
+        decrypt_button = tk.Button(decryption_tab, text="Decrypt File", font=("Arial", 12),
                                    width=15, height=2, bg="#2196F3", fg="white",
                                    command=self.decrypt_file)
         decrypt_button.pack(pady=20)
+        
+        # Info text
+        self.decryption_info_var = tk.StringVar()
+        ttk.Label(decryption_tab, textvariable=self.decryption_info_var).pack()
 
-        # Time label
-        self.dec_time_var = tk.StringVar()
-        ttk.Label(decryption_tab, textvariable=self.dec_time_var).pack()
 
     def browse_file(self, entry, filetypes=None):
         if filetypes is None:
-            filetypes = (("All files", "*.*"),)
-
-        filename = filedialog.askopenfilename(title="Select a file", filetypes=filetypes)
+            filetypes = [("All files", "*.*")]
+        filename = filedialog.askopenfilename(filetypes=filetypes)
         if filename:
             entry.delete(0, tk.END)
             entry.insert(0, filename)
 
+
     def generate_keys(self):
+        self.update_status("Generating keys...")
         try:
-            start_time = time.time()
-            keys = self.processor.generate_keys(save_to_file=True)
-            end_time = time.time()
+            # Call generate_keys and get the dictionary back
+            keys = self.processor.generate_keys()
+            pub_key = keys['public_key']
+            priv_key = keys['private_key']
 
-            # Display keys
-            self.pub_key_text.delete(1.0, tk.END)
-            self.pub_key_text.insert(tk.END, f"n: {keys['public_key'][0]}\ne: {keys['public_key'][1]}")
+            # Display keys directly from the returned dictionary
+            self.pub_key_text.config(state=tk.NORMAL)
+            self.pub_key_text.delete('1.0', tk.END)
+            self.pub_key_text.insert(tk.END, f"n={hex(pub_key[0])}\ne={hex(pub_key[1])}")
+            self.pub_key_text.config(state=tk.DISABLED)
 
-            self.priv_key_text.delete(1.0, tk.END)
-            self.priv_key_text.insert(tk.END, f"n: {keys['private_key'][0]}\nd: {keys['private_key'][1]}")
+            self.priv_key_text.config(state=tk.NORMAL)
+            self.priv_key_text.delete('1.0', tk.END)
+            self.priv_key_text.insert(tk.END, f"n={hex(priv_key[0])}\nd={hex(priv_key[1])}")
+            self.priv_key_text.config(state=tk.DISABLED)
 
-            self.update_status(f"Keys generated in {(end_time - start_time) * 1000:.2f} ms")
-            messagebox.showinfo("Success",
-                                "New RSA keys generated successfully!\nSaved to public_key.txt and private_key.txt")
+            # Construct paths for the message box
+            pub_path = os.path.join("keys", "public_key.txt")
+            priv_path = os.path.join("keys", "private_key.txt")
+            messagebox.showinfo("Success", f"Keys generated and saved to '{pub_path}' and '{priv_path}'")
+            self.update_status("Keys generated successfully.")
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to generate keys: {str(e)}")
-            self.update_status("Key generation failed")
-
-            raise e
+            messagebox.showerror("Error", f"Key generation failed: {e}")
+            self.update_status("Key generation failed.")
 
     def encrypt_file(self):
-        plaintext_file = self.plaintext_entry.get()
-        pubkey_file = self.pubkey_entry.get()
-        output_file = 'encrypted.enc'
+        plaintext_path = self.plaintext_entry.get()
+        pubkey_path = self.pubkey_entry.get()
 
-        if not plaintext_file:
-            messagebox.showerror("Error", "Please select a plaintext file")
-            return
-        if not pubkey_file:
-            messagebox.showerror("Error", "Please select a public key file")
+        if not plaintext_path or not pubkey_path:
+            messagebox.showerror("Error", "Please select both plaintext file and public key file.")
             return
 
+        output_path = filedialog.asksaveasfilename(defaultextension=".bin",
+                                                   filetypes=[("Binary files", "*.bin")],
+                                                   title="Save Encrypted File As")
+        if not output_path:
+            return
+
+        self.encryption_info_var.set(f"Encrypting file...")
+        self.update_status(f"Encrypting {plaintext_path}...")
         try:
-            n, e = parse_hex_key(pubkey_file)
+            # 1. Load the public key using the processor
+            public_key_tuple = self.processor.load_public_key(pubkey_path)
 
-            public_key = (n, e)
-
-            # Read plaintext file
-            with open(plaintext_file, 'rb') as f:
-                plaintext = f.read()
-
+            # 2. Call encrypt_file, passing the loaded key tuple
             start_time = time.time()
-
-            # Encrypt using RSA-OAEP
-            rsa = RSA_OAEP()
-            ciphertext = rsa.encrypt(public_key, plaintext)
-            print("ciphertext", ciphertext)
-
-            # Write ciphertext to file
-            with open(output_file, 'wb') as f:
-                f.write(ciphertext)
-
+            self.processor.encrypt_file(input_path=plaintext_path,
+                                        output_path=output_path,
+                                        public_key=public_key_tuple) # Pass the key tuple
             end_time = time.time()
-
-            self.enc_time_var.set(f"Encryption completed in {(end_time - start_time) * 1000:.2f} ms")
-            self.cipher_info_var.set(f"Ciphertext size: {len(ciphertext)} bytes")
-            self.update_status(f"File encrypted successfully: {output_file}")
-            messagebox.showinfo("Success", f"File encrypted successfully!\nSaved to: {output_file}")
+            
+            self.encryption_info_var.set(f"Encryption completed in {(end_time - start_time) * 1000:.2f} ms")
+            messagebox.showinfo("Success", f"File encrypted successfully to {output_path}")
+            self.update_status("Encryption complete.")
+        except FileNotFoundError as e:
+             messagebox.showerror("Error", f"File not found: {e}")
+             self.update_status("Encryption failed: File not found.")
+        except ValueError as e: # Catches key loading errors too
+             messagebox.showerror("Error", f"Encryption failed: {e}")
+             self.update_status(f"Encryption failed: {e}")
         except Exception as e:
-            messagebox.showerror("Error", f"Encryption failed: {str(e)}")
-            self.update_status("Encryption failed")
-            self.enc_time_var.set("")
-            self.cipher_info_var.set("")
-
-            raise e
+            messagebox.showerror("Error", f"An unexpected error occurred during encryption: {e}")
+            self.update_status("Encryption failed: Unexpected error.")
 
     def decrypt_file(self):
-        cipher_file = self.cipher_entry.get()
-        privkey_file = self.privkey_entry.get()
-        output_file = self.dec_output_entry.get() or 'decrypted.bin'
+        ciphertext_path = self.ciphertext_entry.get()
+        privkey_path = self.privkey_entry.get()
 
-        if not cipher_file:
-            messagebox.showerror("Error", "Please select a ciphertext file")
-            return
-        if not privkey_file:
-            messagebox.showerror("Error", "Please select a private key file")
+        if not ciphertext_path or not privkey_path:
+            messagebox.showerror("Error", "Please select both ciphertext file and private key file.")
             return
 
+        output_path = filedialog.asksaveasfilename(defaultextension=".bin",
+                                                   filetypes=[("All files", "*.*")],
+                                                   title="Save Decrypted File As")
+        if not output_path:
+            return
+        
+        self.decryption_info_var.set(f"Decrypting file...")
+        self.update_status(f"Decrypting {ciphertext_path}...")
         try:
-            n, d = parse_hex_key(privkey_file)  # Create this function in helper.py
-            private_key = (n, d)
+            # 1. Load the private key using the processor
+            private_key_tuple = self.processor.load_private_key(privkey_path)
 
-            # Read ciphertext file
-            with open(cipher_file, 'rb') as f:
-                ciphertext = f.read()
-
+            # 2. Call decrypt_file, passing the loaded key tuple
             start_time = time.time()
-
-            # Decrypt using RSA-OAEP
-            rsa = RSA_OAEP()
-            plaintext = rsa.decrypt(private_key, ciphertext)
-
-            # Write plaintext to file
-            with open(output_file, 'wb') as f:
-                f.write(plaintext)
-
+            self.processor.decrypt_file(input_path=ciphertext_path,
+                                        output_path=output_path,
+                                        private_key=private_key_tuple) # Pass the key tuple
             end_time = time.time()
 
-            self.dec_time_var.set(f"Decryption completed in {(end_time - start_time) * 1000:.2f} ms")
-            self.update_status(f"File decrypted successfully: {output_file}")
-            messagebox.showinfo("Success", f"File decrypted successfully!\nSaved to: {output_file}")
+            self.decryption_info_var.set(f"Decryption completed in {(end_time - start_time) * 1000:.2f} ms")
+            messagebox.showinfo("Success", f"File decrypted successfully to {output_path}")
+            self.update_status("Decryption complete.")
+        except FileNotFoundError as e:
+             messagebox.showerror("Error", f"File not found: {e}")
+             self.update_status("Decryption failed: File not found.")
+        except ValueError as e: # Catches key loading errors too
+             messagebox.showerror("Error", f"Decryption failed: {e}")
+             self.update_status(f"Decryption failed: {e}")
         except Exception as e:
-            messagebox.showerror("Error", f"Decryption failed: {str(e)}")
-            self.update_status("Decryption failed")
-            self.dec_time_var.set("")
-
+            messagebox.showerror("Error", f"An unexpected error occurred during decryption: {e}. Check if the key is correct and the file is not corrupted.")
+            self.update_status("Decryption failed: Unexpected error or invalid data/key.")
             raise e
 
     def update_status(self, message):
