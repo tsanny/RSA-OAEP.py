@@ -90,7 +90,7 @@ class CryptoApp:
                                    width=15, height=2, bg="#4CAF50", fg="white",
                                    command=self.encrypt_file)
         encrypt_button.pack(pady=20)
-        
+
         # Info text
         self.encryption_info_var = tk.StringVar()
         ttk.Label(encryption_tab, textvariable=self.encryption_info_var).pack()
@@ -126,7 +126,7 @@ class CryptoApp:
                                    width=15, height=2, bg="#2196F3", fg="white",
                                    command=self.decrypt_file)
         decrypt_button.pack(pady=20)
-        
+
         # Info text
         self.decryption_info_var = tk.StringVar()
         ttk.Label(decryption_tab, textvariable=self.decryption_info_var).pack()
@@ -161,9 +161,7 @@ class CryptoApp:
             self.priv_key_text.config(state=tk.DISABLED)
 
             # Construct paths for the message box
-            pub_path = os.path.join("keys", "public_key.txt")
-            priv_path = os.path.join("keys", "private_key.txt")
-            messagebox.showinfo("Success", f"Keys generated and saved to '{pub_path}' and '{priv_path}'")
+            messagebox.showinfo("Success", "Keys generated and saved to 'public_key.txt' and 'private_key.txt'")
             self.update_status("Keys generated successfully.")
         except Exception as e:
             messagebox.showerror("Error", f"Key generation failed: {e}")
@@ -195,7 +193,7 @@ class CryptoApp:
                                         output_path=output_path,
                                         public_key=public_key_tuple) # Pass the key tuple
             end_time = time.time()
-            
+
             self.encryption_info_var.set(f"Encryption completed in {(end_time - start_time) * 1000:.2f} ms")
             messagebox.showinfo("Success", f"File encrypted successfully to {output_path}")
             self.update_status("Encryption complete.")
@@ -222,8 +220,8 @@ class CryptoApp:
                                                    title="Save Decrypted File As")
         if not output_path:
             return
-        
-        self.decryption_info_var.set(f"Decrypting file...")
+
+        self.decryption_info_var.set("Decrypting file...")
         self.update_status(f"Decrypting {ciphertext_path}...")
         try:
             # 1. Load the private key using the processor

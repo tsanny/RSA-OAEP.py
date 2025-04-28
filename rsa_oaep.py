@@ -52,7 +52,10 @@ class RSA_OAEP:
             self.p, self.q = p, q
             n = p * q
             phi = (p-1) * (q-1)
-            d = modinv(e, phi)
+            try:
+                d = modinv(e, phi)
+            except ValueError:
+                continue
             self.n, self.d = n, d
             break
 
